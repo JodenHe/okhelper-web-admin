@@ -2,7 +2,7 @@ name: Depoly Action
 
 on:
   push:
-    branches: [ master, min ]
+    branches: [ master, main ]
 
 jobs:
   build:
