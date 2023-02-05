@@ -58,7 +58,7 @@
           <el-button v-if="row.status!='draft'" size="mini" @click="handleModifyStatus(row,'draft')">
             Draft
           </el-button> -->
-          <el-button size="mini" @click="handleModifyStatus(row,'draft')">
+          <el-button size="mini" @click="handleAddRole(row)">
             分配角色
           </el-button>
           <el-button v-if="row.status!='deleted'" size="mini" type="danger" @click="handleDelete(row,$index)">
@@ -103,11 +103,43 @@
         </el-button>
       </div>
     </el-dialog>
+
+    <el-dialog :visible.sync="dialogVisible" title="分配角色">
+      <el-form :model="temp" label-width="80px" label-position="left">
+        <!-- <el-form-item label="Name">
+          <el-input v-model="role.name" placeholder="Role Name" />
+        </el-form-item>
+        <el-form-item label="Desc">
+          <el-input
+            v-model="role.description"
+            :autosize="{ minRows: 2, maxRows: 4}"
+            type="textarea"
+            placeholder="Role Description"
+          />
+        </el-form-item> -->
+        <el-form-item label="角色">
+          <el-tree
+            ref="tree"
+            :check-strictly="checkStrictly"
+            :data="rolesData"
+            :props="defaultProps"
+            show-checkbox
+            node-key="id"
+            class="permission-tree"
+          />
+        </el-form-item>
+      </el-form>
+      <div style="text-align:right;">
+        <el-button type="danger" @click="dialogVisible=false">取消</el-button>
+        <el-button type="primary" @click="confirmRole">确认</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <script>
 import { list, createUser, deleteUser, updateUser } from '@/api/user'
+import { vaildRoleList, assignRole } from '@/api/role'
 
 const sexOptions = [
   { key: '男', display_name: '男' },
@@ -127,7 +159,8 @@ const temp = {
   userEmail: '',
   userSex: '保密',
   userPassword: '',
-  deleteStatus: 1
+  deleteStatus: 1,
+  roleList: []
 }
 
 export default {
@@ -151,10 +184,17 @@ export default {
     return {
       list: null,
       listLoading: true,
+      dialogVisible: false,
       dialogFormVisible: false,
       sexOptions,
       statusOptions,
       dialogStatus: '',
+      roles: [],
+      checkStrictly: false,
+      defaultProps: {
+        children: 'children',
+        label: 'roleName'
+      },
       textMap: {
         update: 'Edit',
         create: 'Create'
@@ -168,10 +208,20 @@ export default {
       }
     }
   },
+  computed: {
+    rolesData() {
+      return this.roles
+    }
+  },
   created() {
     this.fetchData()
+    this.getRoles()
   },
   methods: {
+    async getRoles() {
+      const res = await vaildRoleList()
+      this.roles = this.generateRoles(res.data)
+    },
     fetchData() {
       this.listLoading = true
       list().then(response => {
@@ -247,6 +297,54 @@ export default {
           duration: 2000
         })
         this.list.splice(index, 1)
+      })
+    },
+    // Reshape the routes structure so that it looks the same as the sidebar
+    generateRoles(roles) {
+      const res = []
+
+      for (const role of roles) {
+        const data = {
+          id: role.id,
+          roleName: role.roleName
+        }
+        res.push(data)
+      }
+      return res
+    },
+    generateArr(roles) {
+      const data = []
+      roles.forEach(role => {
+        data.push(role)
+      })
+      return data
+    },
+    handleAddRole(row) {
+      const roleList = row.roleList
+      this.dialogVisible = true
+      this.checkStrictly = true
+      const roles = this.generateRoles(roleList)
+      this.temp = Object.assign({}, row) // copy obj
+      this.$nextTick(() => {
+        this.$refs.tree.setCheckedNodes(this.generateArr(roles))
+        // set checked state of a node not affects its father and child nodes
+        this.checkStrictly = false
+      })
+    },
+    confirmRole() {
+      const checkedKeys = this.$refs.tree.getCheckedKeys()
+      assignRole({
+        userName: this.temp.userName,
+        roles: checkedKeys
+      }).then((response) => {
+        this.dialogVisible = false
+        this.$notify({
+          title: 'Success',
+          message: response.msg || response.data || 'Delete Successfully',
+          type: 'success',
+          duration: 2000
+        })
+        this.fetchData()
       })
     }
   }
