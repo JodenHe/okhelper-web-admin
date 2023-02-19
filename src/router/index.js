@@ -181,6 +181,27 @@ export const constantRoutes = [
       }
     ]
   },
+  {
+    path: '/product',
+    component: Layout,
+    redirect: '/product/list',
+    name: '商品管理',
+    meta: { title: '商品管理', icon: 'el-icon-s-goods' },
+    children: [
+      {
+        path: 'category',
+        name: '商品分类',
+        component: () => import('@/views/category/index'),
+        meta: { title: '商品分类', icon: 'el-icon-collection-tag' }
+      },
+      {
+        path: 'list',
+        name: '用户列表',
+        component: () => import('@/views/user/index'),
+        meta: { title: '商品管理', icon: 'el-icon-goods' }
+      }
+    ]
+  },
 
   // 404 page must be placed at the end !!!
   { path: '*', redirect: '/404', hidden: true }
