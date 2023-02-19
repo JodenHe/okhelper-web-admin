@@ -80,7 +80,7 @@
           <el-tag :type="scope.row.deleteStatus | statusFilter">{{ scope.row.deleteStatus | statusNameFilter }}</el-tag>
         </template>
       </el-table-column>
-      <el-table-column align="center" prop="created_at" label="操作">
+      <el-table-column align="center" prop="created_at" label="操作" min-width="200px;">
         <template slot-scope="{row}">
           <el-button type="primary" size="mini" @click="handleUpdate(row)">
             编辑
