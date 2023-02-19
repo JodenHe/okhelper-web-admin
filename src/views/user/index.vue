@@ -231,7 +231,7 @@ export default {
       })
     },
     resetTemp() {
-      this.temp = temp
+      this.temp = Object.assign({}, temp)
     },
     handleCreate() {
       this.rules.userPassword[0].required = true

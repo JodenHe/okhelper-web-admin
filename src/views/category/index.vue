@@ -80,8 +80,7 @@ export default {
   },
   methods: {
     resetTemp() {
-      debugger
-      this.temp = temp
+      this.temp = Object.assign({}, temp)
     },
     getCategory() {
       categorys().then(res => {
@@ -114,7 +113,6 @@ export default {
       return data.categoryName.indexOf(value) !== -1
     },
     add(data) {
-      debugger
       this.resetTemp()
       this.dialogStatus = 'create'
       this.dialogFormVisible = true
