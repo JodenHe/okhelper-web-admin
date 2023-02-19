@@ -103,6 +103,9 @@
         </el-form-item>
         <el-form-item label="条码" prop="barCode">
           <el-input v-model="temp.barCode" />
+          <el-button type="primary" size="mini" @click="generateBarCode()">
+            生成
+          </el-button>
         </el-form-item>
         <el-form-item label="分类" prop="categoryId">
           <treeselect
@@ -148,6 +151,7 @@
 <script>
 import { page, deleteProduct, productDetail, create, update } from '@/api/product'
 import { categorys } from '@/api/product-category'
+import { generateBarCode } from '@/api/common'
 import { getToken } from '@/utils/auth'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 // import the component
@@ -358,6 +362,11 @@ export default {
     },
     handleFileRemove(file, fileList) {
       this.temp.fileList = fileList
+    },
+    generateBarCode() {
+      generateBarCode().then(res => {
+        this.temp.barCode = res.data.barCode
+      })
     }
   }
 }
