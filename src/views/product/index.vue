@@ -123,6 +123,16 @@
           </el-select>
         </el-form-item>
       </el-form>
+      <el-upload
+        :action="uploadProps.action"
+        :headers="uploadProps.headers"
+        list-type="picture-card"
+        :file-list="temp.fileList"
+        :on-success="handleUploadSuccess"
+        :on-remove="handleFileRemove"
+      >
+        <i class="el-icon-plus" />
+      </el-upload>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">
           取消
@@ -138,6 +148,7 @@
 <script>
 import { page, deleteProduct, productDetail, create, update } from '@/api/product'
 import { categorys } from '@/api/product-category'
+import { getToken } from '@/utils/auth'
 import Pagination from '@/components/Pagination' // secondary package based on el-pagination
 // import the component
 import Treeselect from '@riophae/vue-treeselect'
@@ -150,13 +161,21 @@ const temp = {
   articleNumber: '',
   barCode: '',
   categoryId: undefined,
-  retailPrice: undefined
+  retailPrice: undefined,
+  fileList: []
 }
 
 const statusOptions = [
   { key: 1, display_name: '上架' },
   { key: 0, display_name: '下架' }
 ]
+
+const uploadProps = {
+  action: process.env.VUE_APP_BASE_API + '/upload/img',
+  headers: {
+    token: getToken()
+  }
+}
 
 export default {
   components: { Pagination, Treeselect },
@@ -212,7 +231,8 @@ export default {
         categoryId: [{ required: true, message: 'categoryId is required', trigger: 'change' }],
         retailPrice: [{ required: true, message: 'retailPrice is required', trigger: 'change' }],
         deleteStatus: [{ required: true, message: 'status is required', trigger: 'change' }]
-      }
+      },
+      uploadProps
     }
   },
   computed: {
@@ -268,6 +288,13 @@ export default {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
           this.temp.id = undefined
+          if (this.temp.fileList && this.temp.fileList.length > 0) {
+            this.temp.mainImg = this.temp.fileList[0].url
+            this.temp.subImgs = this.temp.fileList.map(obj => obj.url).join(',')
+          } else {
+            this.temp.mainImg = undefined
+            this.temp.subImgs = undefined
+          }
           create(this.temp).then((response) => {
             this.fetchData()
             this.dialogFormVisible = false
@@ -284,6 +311,15 @@ export default {
     handleUpdate(row) {
       productDetail(row.id).then(res => {
         this.temp = Object.assign({}, res.data) // copy obj
+        if (res.data.subImgs) {
+          const fileList = []
+          res.data.subImgs.split(',').forEach(item => {
+            fileList.push({
+              url: item
+            })
+          })
+          this.temp.fileList = fileList
+        }
         this.dialogStatus = 'update'
         this.dialogFormVisible = true
         this.$nextTick(() => {
@@ -294,6 +330,13 @@ export default {
     updateData() {
       this.$refs['dataForm'].validate((valid) => {
         if (valid) {
+          if (this.temp.fileList && this.temp.fileList.length > 0) {
+            this.temp.mainImg = this.temp.fileList[0].url
+            this.temp.subImgs = this.temp.fileList.map(obj => obj.url).join(',')
+          } else {
+            this.temp.mainImg = undefined
+            this.temp.subImgs = undefined
+          }
           const tempData = Object.assign({}, this.temp)
           update(tempData).then((response) => {
             this.fetchData()
@@ -307,6 +350,14 @@ export default {
           })
         }
       })
+    },
+    handleUploadSuccess(response, file, fileList) {
+      const index = fileList.indexOf(file)
+      fileList[index].url = response.data.url
+      this.temp.fileList = fileList
+    },
+    handleFileRemove(file, fileList) {
+      this.temp.fileList = fileList
     }
   }
 }
